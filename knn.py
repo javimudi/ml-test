@@ -31,12 +31,10 @@ def prepareDataset(dataset, split):
 	trainingSet = list()
 	testSet = list()
 	for line in dataset[1:]:
-		for elem in line[1:4]:
-			if random.random() < split:
-				trainingSet.append(float(elem))
-			else:
-				testSet.append(float(elem))
-	print trainingSet
+		if random.random() < split:
+			trainingSet.append(filter(lambda m: float(m), line[1:4]))
+		else:
+			testSet.append(filter(lambda m: float(m), line[1:4]))
 	return trainingSet, testSet
 
 def euclideanDistance(instance1, instance2, length):
@@ -77,7 +75,7 @@ def _getAccuracies(testSet, predictions):
 			yield 0.0
 
 def getAccuracies(testSet, predictions):
-	return sum(_getAccuracies(testSet, predictions))/len(testSet) * 100.0
+	return 100.0 * float(sum(_getAccuracies(testSet, predictions)))/float(len(testSet))
 
 def getAccuraciesNP(testSet, predictions):
 	return np.array(list(_getAccuracies(testSet, predictions))).mean() * 100
@@ -86,23 +84,19 @@ def getAccuraciesNP(testSet, predictions):
 def main():
 
 	dataset = loadFullDataset('iris.csv')
-	for inter in range(1,1000):
-		split = float(inter)/100
+	for inter in range(1,100):
+		split = float(inter)/100.0
 		# prepare data
-		repetitions = 5	
-		for rep in xrange(repetitions):
-			lenTrainingSet = []
-			trainingSet, testSet = prepareDataset(dataset, split)
-			lenTrainingSet.append(len(trainingSet))
-			k = 3
-			predictions = []
-			for testElem in testSet:
-				neighbors = getNeighbors(trainingSet, testElem, k)
-				predictions.append(getResponse(neighbors))
-
-			print len(testSet), len(predictions)
-			accuracy = getAccuracies(testSet, predictions)
-			print('Accuracy: ' + repr(accuracy) + '%'),
-			print "Thres: {0}, Latest Len Training set: {1}".format(split, lenTrainingSet)
+		predictions = []
+		lenTrainingSet = []
+		trainingSet, testSet = prepareDataset(dataset, split)
+		lenTrainingSet.append(len(trainingSet))
+		k = 3
+		for testElem in testSet:
+			neighbors = getNeighbors(trainingSet, testElem, k)
+			predictions.append(getResponse(neighbors))
+		accuracy = getAccuraciesNP(testSet, predictions)
+		print('Accuracy: ' + repr(accuracy) + '%'),
+		print "Thres: {0}, Latest Len Training set: {1}".format(split, lenTrainingSet)
 	
 main()
